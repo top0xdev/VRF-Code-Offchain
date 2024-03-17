@@ -58,7 +58,7 @@ function hashToCurve(pk, seed) {
     ),
     16
   );
-
+  console.log('Entered the loop');
   while (true) {
     try {
       let y2 = h
@@ -78,8 +78,10 @@ function hashToCurve(pk, seed) {
       );
       let pt = ec.curve.point(h, y);
       // console.log()
+      console.log('trying to return pt');
       return pt.y.mod(new BN(2)).eq(new BN(0)) ? pt : pt.neg();
     } catch (e) {
+      console.log('Entered error catch');
       console.log(e);
       // Recursively hash
       h = new BN(ethUtil.keccak256(h.toBuffer()), 16);
@@ -94,7 +96,7 @@ function ptToAddress(pt) {
       .keccak256(
         ethers.utils.defaultAbiCoder.encode(
           ["uint256", "uint256"],
-          [pt.getX(), pt.getY()]
+          [pt.getX().toString(), pt.getY().toString()]
         )
       )
       .slice(-40)
@@ -102,7 +104,9 @@ function ptToAddress(pt) {
 }
 
 function marshalPoint(pt) {
-  return ethers.utils.arrayify(pt.getX()) + ethers.utils.arrayify(pt.getY());
+  //console.log(pt.getX().toString('hex'));
+  console.log(ethers.utils.hexValue(pt.getX().toString())); //still wrangling this here
+  return ethers.utils.arrayify(ethers.utils.hexlify(ethers.utils.hexValue(pt.getX().toString()))) + ethers.utils.arrayify(ethers.utils.hexlify(ethers.utils.hexValue(pt.getY().toString())));
 }
 
 function hashMuchToScalar(h, pubk, gamma, uw, v) {
@@ -137,20 +141,28 @@ function genProofWithNonce(seed, nonce, privkey) {
   // Assuming hashToCurve, cv.mul_point, ptToAddress, hashMuchToScalar, and marshalPoint are defined elsewhere
   // and have been adapted to JavaScript. For the sake of this example, let's assume they are placeholders.
   const h = hashToCurve(pubkey, seed);
+  console.log('hashed curve');
   const point = cv.pointFromX(pkh, true);
+  console.log('point genned');
   console.log(cv.g);
-  const gamma = point.mul(cv.g);
+  const gamma = h.mul(pkh);
+  console.log('gamma');
   const u = cv.pointFromX(nonce, true);
+  console.log('u')
+  console.log(u.getX().toString());
+  console.log(Object.getOwnPropertyNames(u));
   // const u = cv.mul_point(nonce, cv.generator);
-  const witness = ptToAddress(u.mul(cv.g));
+  const witness = ptToAddress(u);
   // const v = cv.mul_point(nonce, h);
-  point = cv.pointFromX(nonce, true);
-  const v = point.mul(cv.g);
+  point2 = cv.pointFromX(nonce, true); //fail to see what for. Isn't this just a copy of u?
+  const v = h.mul(nonce);
   const c = parseInt(
     hashMuchToScalar(h, pubkey, gamma, witness, v).toString("hex"),
     16
   );
   const s = (nonce - c * pkh) % cv.order;
+  console.log('beforehash');
+  console.log(marshalPoint(gamma));
   const outputHash =
     "0x" +
     ethUtil
@@ -161,6 +173,7 @@ function genProofWithNonce(seed, nonce, privkey) {
         ])
       )
       .toString("hex");
+  console.log('hashed');
 
   return {
     pubkey: pubkey,
