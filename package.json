@@ -1,0 +1,19 @@
+{
+  "name": "new-folder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bn.js": "^5.2.1",
+    "elliptic": "^6.5.5",
+    "ethereumjs-util": "^7.1.5",
+    "ethers": "^5.4",
+    "js-sha3": "^0.9.3"
+  }
+}
