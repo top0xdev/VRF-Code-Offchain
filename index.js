@@ -58,7 +58,7 @@ function hashToCurve(pk, seed) {
     ),
     16
   );
-  console.log('Entered the loop');
+  console.log("Entered the loop");
   while (true) {
     try {
       let y2 = h
@@ -78,10 +78,10 @@ function hashToCurve(pk, seed) {
       );
       let pt = ec.curve.point(h, y);
       // console.log()
-      console.log('trying to return pt');
+      console.log("trying to return pt");
       return pt.y.mod(new BN(2)).eq(new BN(0)) ? pt : pt.neg();
     } catch (e) {
-      console.log('Entered error catch');
+      console.log("Entered error catch");
       console.log(e);
       // Recursively hash
       h = new BN(ethUtil.keccak256(h.toBuffer()), 16);
@@ -103,10 +103,36 @@ function ptToAddress(pt) {
   );
 }
 
+function toBytes(number, length, byteOrder = "big") {
+  const byteArray = new Array(length).fill(0);
+  for (let index = 0; index < length; index++) {
+    const byteIndex = byteOrder === "big" ? length - index - 1 : index;
+    byteArray[byteIndex] = number & 0xff;
+    number = number >> 8;
+  }
+  return byteArray;
+}
+
 function marshalPoint(pt) {
   //console.log(pt.getX().toString('hex'));
-  console.log(ethers.utils.hexValue(pt.getX().toString())); //still wrangling this here
-  return ethers.utils.arrayify(ethers.utils.hexlify(ethers.utils.hexValue(pt.getX().toString()))) + ethers.utils.arrayify(ethers.utils.hexlify(ethers.utils.hexValue(pt.getY().toString())));
+  // console.log(ethers.utils.hexValue(pt.getX().toString())); //still wrangling this here
+  // console.log(ethers.utils.hexValue(pt.x.toString()), pt.y);
+  // const tmp = new BN(pt.x);
+  // console.log(ethers.utils.hexlify(pt.x.toString(16)));
+  // return (
+  //   ethers.utils.arrayify(
+  //     // ethers.utils.hexlify(ethers.utils.hexValue(pt.y.toString()))
+  //     // ethers.utils.hexlify(pt.x.toString(16))
+  //   ) +
+  //   ethers.utils.arrayify(
+  //     // ethers.utils.hexlify(ethers.utils.hexValue(pt.x.toString()))
+  //     ethers.utils.hexlify(pt.y)
+  //   )
+  // );
+  const a = toBytes(pt.x, 32);
+  const b = toBytes(pt.y, 32);
+  console.log(a, b);
+  return a + b;
 }
 
 function hashMuchToScalar(h, pubk, gamma, uw, v) {
@@ -141,14 +167,14 @@ function genProofWithNonce(seed, nonce, privkey) {
   // Assuming hashToCurve, cv.mul_point, ptToAddress, hashMuchToScalar, and marshalPoint are defined elsewhere
   // and have been adapted to JavaScript. For the sake of this example, let's assume they are placeholders.
   const h = hashToCurve(pubkey, seed);
-  console.log('hashed curve');
+  console.log("hashed curve");
   const point = cv.pointFromX(pkh, true);
-  console.log('point genned');
+  console.log("point genned");
   console.log(cv.g);
   const gamma = h.mul(pkh);
-  console.log('gamma');
+  console.log("gamma");
   const u = cv.pointFromX(nonce, true);
-  console.log('u')
+  console.log("u");
   console.log(u.getX().toString());
   console.log(Object.getOwnPropertyNames(u));
   // const u = cv.mul_point(nonce, cv.generator);
@@ -161,7 +187,7 @@ function genProofWithNonce(seed, nonce, privkey) {
     16
   );
   const s = (nonce - c * pkh) % cv.order;
-  console.log('beforehash');
+  console.log("beforehash");
   console.log(marshalPoint(gamma));
   const outputHash =
     "0x" +
@@ -173,7 +199,7 @@ function genProofWithNonce(seed, nonce, privkey) {
         ])
       )
       .toString("hex");
-  console.log('hashed');
+  console.log("hashed");
 
   return {
     pubkey: pubkey,
